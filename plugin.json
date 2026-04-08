@@ -1,0 +1,11 @@
+{
+  "name": "Mixer",
+  "author": "Kirill Nikiforov",
+  "flags": [],
+  "api_version": 1,
+  "publish": {
+    "tags": ["media", "audio", "bluetooth"],
+    "description": "Controls the volume of your applications",
+    "image": "https://raw.githubusercontent.com/allmazz/decky-volume-mixer/main/images/screenshot.png"
+  }
+}
