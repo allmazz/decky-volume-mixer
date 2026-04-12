@@ -94,7 +94,7 @@ export const SettingsModal = (props: SettingsModalProps) => {
         });
         toaster.toast({
             title: "Volume Mixer",
-            body: res ? "Filters saved successfully" : "Failed to save settings, check values and try again",
+            body: res ? "Settings saved successfully" : "Failed to save settings, check values and try again",
             critical: !res,
         });
     }

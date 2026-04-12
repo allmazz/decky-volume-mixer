@@ -1,23 +1,27 @@
 import json
 import asyncio
 import logging
+import os
 import re
+import shutil
+from asyncio.subprocess import Process
+from typing import Coroutine, Any
 
 import decky # type: ignore
 from settings import SettingsManager # type: ignore
+from helpers import get_user_id # type: ignore
 
 
 class Plugin:
     _logger: logging.Logger
     _settings: SettingsManager
     _filters: list[re.Pattern]
+    _pw_dump_bin: str
+    _wpctl_bin: str
+    _xdg_runtime_dir: str
 
     async def get_playbacks(self) -> list:
-        proc = await asyncio.create_subprocess_exec(
-            "pw-dump",
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
-        )
+        proc = await self._create_subprocess_exec(self._pw_dump_bin)
         stdout, stderr = await proc.communicate()
         if proc.returncode != 0:
             self._logger.error(f"failed to get playbacks! pw-dump failed with code {proc.returncode}: {stderr.decode()}\n{stdout.decode()}")
@@ -77,11 +81,7 @@ class Plugin:
     async def set_volume(self, id: int, volume: int):
         volume = max(0, min(100 + self._settings.getSetting("boostLimit", 0), volume))
         vol_str = f"{volume / 100:.2f}"
-        proc = await asyncio.create_subprocess_exec(
-            "wpctl", "set-volume", str(id), vol_str,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
-        )
+        proc = await self._create_subprocess_exec(self._wpctl_bin, "set-volume", str(id), vol_str)
         stdout, stderr = await proc.communicate()
         if proc.returncode != 0:
             self._logger.error(f"failed to set volume of {id}! wpctl failed with code {proc.returncode}: {stderr.decode()}\n{stdout.decode()}")
@@ -127,5 +127,28 @@ class Plugin:
             except re.error as e:
                 self._logger.error(f"Failed to compile filter '{_filter}': {e}")
 
+        self._pw_dump_bin = shutil.which("pw-dump") or ""
+        if not self._pw_dump_bin:
+            raise Exception("pw-dump not found in PATH, plugin cannot work without it")
+        self._wpctl_bin = shutil.which("wpctl") or ""
+        if not self._wpctl_bin:
+            raise Exception("wpctl not found in PATH, plugin cannot work without it")
+        self._logger.info(f"found pw-dump at {self._pw_dump_bin} and wpctl at {self._wpctl_bin}")
+
+        self._xdg_runtime_dir = os.environ.get("XDG_RUNTIME_DIR") or ""
+        if not self._xdg_runtime_dir:
+            self._xdg_runtime_dir = f"/run/user/{get_user_id()}"
+            self._logger.info(f"XDG_RUNTIME_DIR is not set, using {self._xdg_runtime_dir}")
+        else:
+            self._logger.info(f"found XDG_RUNTIME_DIR={self._xdg_runtime_dir}")
+
     async def _unload(self):
         pass
+
+    def _create_subprocess_exec(self, *args, **kwargs) -> Coroutine[Any, Any, Process]:
+        return asyncio.create_subprocess_exec(
+            *args, **kwargs,
+            env={**os.environ, "XDG_RUNTIME_DIR": self._xdg_runtime_dir},
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
