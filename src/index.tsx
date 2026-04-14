@@ -129,7 +129,7 @@ function Content() {
 
 function TitleView() {
     return (
-        <Focusable style={{display: "flex", padding: 0, width: "100%", justifyContent: "space-between"}}>
+        <Focusable style={{display: "flex", padding: 0, width: "100%", justifyContent: "space-between", paddingBottom: "8px"}}>
             <div className={staticClasses.Title} style={{padding: 0}}>Volume Mixer</div>
             <DialogButton
                 style={{height: '28px', width: '40px', minWidth: 0, padding: '10px 12px'}}
