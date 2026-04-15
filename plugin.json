@@ -6,6 +6,6 @@
   "publish": {
     "tags": ["media", "audio", "bluetooth"],
     "description": "Controls the volume of your applications",
-    "image": "https://raw.githubusercontent.com/allmazz/decky-volume-mixer/main/images/screenshot.png"
+    "image": "https://raw.githubusercontent.com/allmazz/decky-volume-mixer/main/assets/thumbnail.jpg"
   }
 }
